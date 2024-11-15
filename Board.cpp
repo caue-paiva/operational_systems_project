@@ -61,18 +61,16 @@ class Board {
       //vamos ter  3 "mapas" diferentes e ele será escolhido de forma aletória. Não existe geração automática, os mapas são 
       //hardcoded
       int map_choice = map_type_distrib(generator);
+      generate_border_walls();
         switch (map_choice) {
             case 1:
-                generate_border_walls();
-                break;
-            case 2:
                 generate_cross_with_openings();
                 break;
-            case 3:
+            case 2:
                 generate_x_pattern();
                 break;
             default:
-                generate_border_walls(); // Default to pattern 1 if there's an error
+                cout << "Essa opção para gerar mapa não está disponível";
                 break;
         }
    }
@@ -88,28 +86,27 @@ class Board {
     }
 
    void generate_cross_with_openings() {
-        int mid_start = size / 2 - 1;  // Start of the 2x2 center
-        int mid_end = size / 2;        // End of the 2x2 center
+      int mid_start = size / 2 - 1;  // Start of the 3x3 center
+      int mid_end = size / 2 + 1;    // End of the 3x3 center
 
-        for (int i = 2; i < size - 2; i++) { // Start from index 2 and stop before size-2 for 2-cell edge spacing
-            if (i < mid_start || i > mid_end) { // Skip the 2x2 opening in the center
-                cells[i][mid_start] = WALL;   // Vertical line of the cross
-                cells[i][mid_end] = WALL;
-                cells[mid_start][i] = WALL;   // Horizontal line of the cross
-                cells[mid_end][i] = WALL;
-            }
-        }
-    }
+      for (int i = 2; i < size - 2; i++) { // Start from index 2 and stop before size-2 for 2-cell edge spacing
+         if (i < mid_start || i > mid_end) { // Skip the 3x3 opening in the center
+               cells[i][mid_start] = WALL;   // Vertical line of the cross
+               cells[i][mid_end] = WALL;
+               cells[mid_start][i] = WALL;   // Horizontal line of the cross
+               cells[mid_end][i] = WALL;
+         }
+      }
+   }
 
-    // Pattern 3: X shape with 2-cell spacing from the edges and a 2x2 opening in the center
-    void generate_x_pattern() {
-        int mid_start = size / 2 - 1;  // Start of the 2x2 center
-        int mid_end = size / 2;        // End of the 2x2 center
+    void generate_x_pattern() { //gera mapa com um X
+        int mid_start = size / 2 - 1;  
+        int mid_end = size / 2;      
 
-        for (int i = 2; i < size - 2; i++) { // Start from index 2 and stop before size-2 for 2-cell edge spacing
-            if (i < mid_start || i > mid_end) { // Skip the 2x2 opening in the center
-                cells[i][i] = WALL;                  // Top-left to bottom-right diagonal
-                cells[i][size - 1 - i] = WALL;       // Top-right to bottom-left diagonal
+        for (int i = 2; i < size - 2; i++) { 
+            if (i < mid_start || i > mid_end) {
+                cells[i][i] = WALL;                  
+                cells[i][size - 1 - i] = BoardState::WALL; //coloca parede nesse lugar
             }
         }
     }
@@ -122,10 +119,14 @@ class Board {
           cells(size, vector<BoardState>(size, BoardState::EMPTY)), 
           generator(static_cast<unsigned int>(chrono::system_clock::now().time_since_epoch().count())),                             
           map_elements_distrib(0, size - 1),
-          map_type_distrib(1, 3)                  
+          map_type_distrib(1, 2)                  
     {
+
+      if (size < 10){
+         cout << "Tamanho mínimo do mapa é 10";
+      }
       cout << "Constructor called with size " << size << endl;
-      this->generate_border_walls();
+      this->generate_walls();
       this->generate_cops_and_robbers();
     }
 
@@ -138,7 +139,6 @@ class Board {
                   }
                   board_string += "\n";
             }
-
             cout << board_string;
       }
 
@@ -155,6 +155,6 @@ class Board {
 };
 
 int main(){
-   Board my_board = Board(10,2);
+   Board my_board = Board(15,2);
    my_board.draw_board();
 }
