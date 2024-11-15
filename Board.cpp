@@ -30,11 +30,13 @@ class Board {
 
 
    void generate_cops_and_robbers(){
-      if (num_of_cops >= size){
-
+      if (num_of_cops >= size * size - 1){
+         cout << "Error: Too many cops for the board size." << endl;
+         return;
       }
       int cops_generated = 0;
-      while (cops_generated < num_of_cops){ //gerar policiais até atingir o número
+      int max_attempts = size * size * 2;
+      while (cops_generated < num_of_cops && max_attempts > 0){ //gerar policiais até atingir o número
          int new_x = this->get_random_position(); //posições aleatórias
          int new_y = this->get_random_position();
 
@@ -42,6 +44,7 @@ class Board {
             this->cells[new_x][new_y] = BoardState::COP; //coloca o policial
             cops_generated += 1;
          }
+         max_attempts--;
       }
 
       int robber_x = this->get_random_position(); //posição do ladrão
@@ -84,7 +87,6 @@ class Board {
         }
     }
 
-
    void generate_cross_with_openings() {
         int mid_start = size / 2 - 1;  // Start of the 2x2 center
         int mid_end = size / 2;        // End of the 2x2 center
@@ -114,14 +116,15 @@ class Board {
 
    public:
 
-    Board(int size) //construtor da classe
+   Board(int size) //construtor da classe
         : size(size), 
           cells(size, vector<BoardState>(size, BoardState::EMPTY)), 
           generator(rd()),                             
           map_elements_distrib(0, size - 1),
           map_type_distrib(1, 3)                  
     {
-      generate_cops_and_robbers(); //gera os policiais e bandidos
+    cout << "Constructor called with size " << size << endl;
+
     }
 
    void draw_board(){
@@ -144,6 +147,10 @@ class Board {
    
    int get_random_position() {
         return map_elements_distrib(generator);
-    }
+   }
 
 };
+
+int main(){
+   Board my_board = Board(4);
+}
