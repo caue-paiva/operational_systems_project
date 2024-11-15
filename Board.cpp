@@ -99,7 +99,7 @@ class Board {
       }
    }
 
-    void generate_x_pattern() { //gera mapa com um X
+   void generate_x_pattern() { //gera mapa com um X
         int mid_start = size / 2 - 1;  
         int mid_end = size / 2;      
 
@@ -122,10 +122,11 @@ class Board {
           map_type_distrib(1, 2)                  
     {
 
-      if (size < 10){
-         cout << "Tamanho mínimo do mapa é 10";
+      if (size < 15){
+         cerr << "Erro: Tamanho mínimo para gerar o mapa é 15" <<endl;
+         exit(0);
+
       }
-      cout << "Constructor called with size " << size << endl;
       this->generate_walls();
       this->generate_cops_and_robbers();
     }
@@ -135,7 +136,31 @@ class Board {
             for (int i = 0; i < size; i++){
                   for (int j = 0; j < size; j++){
                         board_string += " ";
-                        board_string += (cells[i][j]);
+                        BoardState cell = cells[i][j];
+                        switch (cell) {
+                           case BoardState::WALL:
+                              board_string += "\033[33m"; // Yellow color for WALL
+                              board_string += (cell);
+                              board_string += "\033[0m"; // Reset color
+                              break;
+
+                           case BoardState::ROBBER:
+                              board_string += "\033[31m"; // Red color for ROBBER
+                              board_string += (cell);
+                              board_string += "\033[0m"; // Reset color
+                              break;
+
+                           case BoardState::COP:
+                              board_string += "\033[34m"; // Blue color for COP
+                              board_string += (cell);
+                              board_string += "\033[0m"; // Reset color
+                              break;
+
+                           case BoardState::EMPTY:
+                           default:
+                              board_string += (cell); // No color for EMPTY
+                              break;
+                        }
                   }
                   board_string += "\n";
             }
