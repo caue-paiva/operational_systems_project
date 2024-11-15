@@ -200,7 +200,7 @@ class Board {
    }
 
    int get_money_num(){
-      return this->money_num
+      return this->money_num;
    }
 
    void set_money_num(const int number){
