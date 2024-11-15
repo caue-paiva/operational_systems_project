@@ -235,6 +235,16 @@ class Board {
     )" << reset << endl;
    }
 
+   bool move_to_position(
+      const int old_x,
+      const int old_y,
+      const BoardState element,
+      const int new_x,
+      const int new_y
+   ){
+      //checar mutex
+   }
+
 };
 
 int main(){
