@@ -177,9 +177,38 @@ class Board {
         return map_elements_distrib(generator);
    }
 
+
+   void draw_victory(){
+    std::string green = "\033[32m"; //  cor verde
+    std::string reset = "\033[0m";   // Reset color
+
+    std::cout << green;
+    std::cout << R"(
+ ██    ██ ██ ████████  ██████  ██████  ██  █████   ██
+ ██    ██ ██    ██    ██    ██ ██   ██ ██ ██   ██  ██
+ ██    ██ ██    ██    ██    ██ █████   ██ ███████  ██
+  ██  ██  ██    ██    ██    ██ ██  ██  ██ ██   ██ 
+   ████   ██    ██     ██████  ██   ██ ██ ██   ██  ██
+    )" << reset << std::endl;
+   }
+
+   void draw_game_over(){
+      string red = "\033[31m"; // cor vermelha
+      string reset = "\033[0m";   //reseta a cor
+
+      cout << red;
+      cout << R"(
+     ██████   █████  ███    ███  ███████     ██████  ██   ██ ███████ ██████  
+   ██         ██   ██ ████  ████ ██         ██   ██  ██  ██  ██      ██   ██ 
+   ██   ███   ███████ ██ ████ ██ █████      ██   ██   ████   █████   ██████  
+   ██    ██   ██   ██ ██  ██  ██ ██         ██   ██    ██    ██      ██   ██ 
+     ██████   ██   ██ ██      ██ ███████     ██████    ██    ███████ ██   ██                                                                      
+    )" << reset << endl;
+   }
+
 };
 
 int main(){
    Board my_board = Board(15,2);
-   my_board.draw_board();
+   my_board.draw_victory();
 }
