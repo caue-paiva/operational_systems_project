@@ -12,7 +12,8 @@ enum BoardState {
    EMPTY = ' ',
    WALL = 'o',
    ROBBER = '@',
-   COP = '#'
+   COP = '#',
+   MONEY = '$'
 };
 
 
@@ -24,18 +25,20 @@ class Board {
       
       int size;
       int num_of_cops;
+      int money_num;
 
       mt19937 generator;  //atributos para gerar números aleatórios
       uniform_int_distribution<> map_elements_distrib;    
       uniform_int_distribution<> map_type_distrib;    
 
 
-   void generate_cops_and_robbers(){
+   void generate_game_elements(){
       if (num_of_cops >= size * size - 1){
          cout << "Error: Too many cops for the board size." << endl;
          return;
       }
 
+      //gera policiais
       int cops_generated = 0;
       while (cops_generated < num_of_cops){ //gerar policiais até atingir o número
          int new_x = this->get_random_position(); //posições aleatórias
@@ -47,14 +50,27 @@ class Board {
          }
       }
 
+      //gera o bandido
       int robber_x = this->get_random_position(); //posição do ladrão
       int robber_y = this->get_random_position();
-
       while (!this->position_is_free(robber_x,robber_y)){ //enquanto a posição gerada não for de um lugar vazio
             robber_x = this->get_random_position();
             robber_y = this->get_random_position();
       }
       this->cells[robber_x][robber_y] = BoardState::ROBBER;
+
+      //gera dinheiro
+      int money_generated = 0;
+      while (money_generated < money_num){ //gerar policiais até atingir o número
+         int new_x = this->get_random_position(); //posições aleatórias
+         int new_y = this->get_random_position();
+
+         if (this->position_is_free(new_x,new_y)){ //posição está livre
+            this->cells[new_x][new_y] = BoardState::MONEY; //coloca o policial
+            money_generated += 1;
+         }
+      }
+
    }
 
    void generate_walls(){
@@ -127,8 +143,10 @@ class Board {
          exit(0);
 
       }
+      this->money_num = max(size - (num_of_cops*4),1); //quanto maior o mapa, mais dinheiro, quanto mais policiais, menos dinheiro
+      //no mínimo vamos ter 1 dinheiro
       this->generate_walls();
-      this->generate_cops_and_robbers();
+      this->generate_game_elements();
     }
 
    void draw_board(){
@@ -155,7 +173,11 @@ class Board {
                               board_string += (cell);
                               board_string += "\033[0m"; // Reset color
                               break;
-
+                           case BoardState::MONEY:
+                              board_string += "\033[32m"; // Blue color for COP
+                              board_string += (cell);
+                              board_string += "\033[0m"; // Reset color
+                              break;
                            case BoardState::EMPTY:
                            default:
                               board_string += (cell); // No color for EMPTY
@@ -177,6 +199,13 @@ class Board {
         return map_elements_distrib(generator);
    }
 
+   int get_money_num(){
+      return this->money_num
+   }
+
+   void set_money_num(const int number){
+      this->money_num = number;
+   }
 
    void draw_victory(){
     std::string green = "\033[32m"; //  cor verde
@@ -210,5 +239,5 @@ class Board {
 
 int main(){
    Board my_board = Board(15,2);
-   my_board.draw_victory();
+   my_board.draw_board();
 }
