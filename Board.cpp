@@ -3,6 +3,8 @@
 #include <vector>
 #include <random>
 #include <mutex>
+#include <chrono> 
+
 
 using namespace std;
 
@@ -24,7 +26,6 @@ class Board {
       int num_of_cops;
 
       mt19937 generator;  //atributos para gerar números aleatórios
-      random_device rd; 
       uniform_int_distribution<> map_elements_distrib;    
       uniform_int_distribution<> map_type_distrib;    
 
@@ -34,9 +35,9 @@ class Board {
          cout << "Error: Too many cops for the board size." << endl;
          return;
       }
+
       int cops_generated = 0;
-      int max_attempts = size * size * 2;
-      while (cops_generated < num_of_cops && max_attempts > 0){ //gerar policiais até atingir o número
+      while (cops_generated < num_of_cops){ //gerar policiais até atingir o número
          int new_x = this->get_random_position(); //posições aleatórias
          int new_y = this->get_random_position();
 
@@ -44,7 +45,6 @@ class Board {
             this->cells[new_x][new_y] = BoardState::COP; //coloca o policial
             cops_generated += 1;
          }
-         max_attempts--;
       }
 
       int robber_x = this->get_random_position(); //posição do ladrão
@@ -116,22 +116,25 @@ class Board {
 
    public:
 
-   Board(int size) //construtor da classe
+   Board(const int size,const int num_of_cops) //construtor da classe
         : size(size), 
+          num_of_cops(num_of_cops),
           cells(size, vector<BoardState>(size, BoardState::EMPTY)), 
-          generator(rd()),                             
+          generator(static_cast<unsigned int>(chrono::system_clock::now().time_since_epoch().count())),                             
           map_elements_distrib(0, size - 1),
           map_type_distrib(1, 3)                  
     {
-    cout << "Constructor called with size " << size << endl;
-
+      cout << "Constructor called with size " << size << endl;
+      this->generate_border_walls();
+      this->generate_cops_and_robbers();
     }
 
    void draw_board(){
             string board_string;
             for (int i = 0; i < size; i++){
                   for (int j = 0; j < size; j++){
-                        board_string += cells[i][j];
+                        board_string += " ";
+                        board_string += (cells[i][j]);
                   }
                   board_string += "\n";
             }
@@ -152,5 +155,6 @@ class Board {
 };
 
 int main(){
-   Board my_board = Board(4);
+   Board my_board = Board(10,2);
+   my_board.draw_board();
 }
