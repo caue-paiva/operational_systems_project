@@ -22,57 +22,10 @@ class Board {
 
    private:
       vector<vector<BoardState>> cells; //vetor de células do mapa
-      vector<vector<mutex>> mutexes; //mutex para cada célula do mapa
-      
       int size;
-      int num_of_cops;
-      int money_num;
-
       mt19937 generator;  //atributos para gerar números aleatórios
-      uniform_int_distribution<> map_elements_distrib;    
-      uniform_int_distribution<> map_type_distrib;    
+      uniform_int_distribution<> map_type_distrib; //gerar o tipo do mapa
 
-
-   void generate_game_elements(){
-      if (num_of_cops >= size * size - 1){
-         cout << "Error: Too many cops for the board size." << endl;
-         return;
-      }
-
-      //gera policiais
-      int cops_generated = 0;
-      while (cops_generated < num_of_cops){ //gerar policiais até atingir o número
-         int new_x = this->get_random_position(); //posições aleatórias
-         int new_y = this->get_random_position();
-
-         if (this->position_is_free(new_x,new_y)){ //posição está livre
-            this->cells[new_x][new_y] = BoardState::COP; //coloca o policial
-            cops_generated += 1;
-         }
-      }
-
-      //gera o bandido
-      int robber_x = this->get_random_position(); //posição do ladrão
-      int robber_y = this->get_random_position();
-      while (!this->position_is_free(robber_x,robber_y)){ //enquanto a posição gerada não for de um lugar vazio
-            robber_x = this->get_random_position();
-            robber_y = this->get_random_position();
-      }
-      this->cells[robber_x][robber_y] = BoardState::ROBBER;
-
-      //gera dinheiro
-      int money_generated = 0;
-      while (money_generated < money_num){ //gerar policiais até atingir o número
-         int new_x = this->get_random_position(); //posições aleatórias
-         int new_y = this->get_random_position();
-
-         if (this->position_is_free(new_x,new_y)){ //posição está livre
-            this->cells[new_x][new_y] = BoardState::MONEY; //coloca o policial
-            money_generated += 1;
-         }
-      }
-
-   }
 
    void generate_walls(){
       //vamos ter  3 "mapas" diferentes e ele será escolhido de forma aletória. Não existe geração automática, os mapas são 
@@ -130,12 +83,13 @@ class Board {
 
    public:
 
-   Board(const int size,const int num_of_cops) //construtor da classe
+   vector<vector<mutex>> mutexes; //mutex para cada célula do mapa, vai ser público porque deve ser acessados por diversas threads
+   //em um escopo amplo
+
+   Board(const int size) //construtor da classe
         : size(size), 
-          num_of_cops(num_of_cops),
           cells(size, vector<BoardState>(size, BoardState::EMPTY)), 
           generator(static_cast<unsigned int>(chrono::system_clock::now().time_since_epoch().count())),                             
-          map_elements_distrib(0, size - 1),
           map_type_distrib(1, 2)                  
     {
 
@@ -144,10 +98,7 @@ class Board {
          exit(0);
 
       }
-      this->money_num = max(size - (num_of_cops*4),1); //quanto maior o mapa, mais dinheiro, quanto mais policiais, menos dinheiro
-      //no mínimo vamos ter 1 dinheiro
-      this->generate_walls();
-      this->generate_game_elements();
+      this->generate_walls(); //gera paredes do tabuleiro
     }
 
    void draw_board(){
@@ -196,10 +147,6 @@ class Board {
             return false;
       }
    
-   int get_random_position() {
-        return map_elements_distrib(generator);
-   }
-
    bool set_position(const int x, const int y, const BoardState state){
       if (x >= size || y >= size){
          cout << "X ou Y estão além dos limites do tabuleiro";
@@ -237,19 +184,4 @@ class Board {
     )" << reset << endl;
    }
 
-   bool move_to_position(
-      const int old_x,
-      const int old_y,
-      const BoardState element,
-      const int new_x,
-      const int new_y
-   ){
-      //checar mutex
-   }
-
 };
-
-int main(){
-   Board my_board = Board(15,2);
-   my_board.draw_board();
-}
