@@ -4,6 +4,7 @@
 #include <random>
 #include <mutex>
 #include <chrono> 
+#include "ThreeStateMutex.cpp"
 
 
 using namespace std;
@@ -199,12 +200,13 @@ class Board {
         return map_elements_distrib(generator);
    }
 
-   int get_money_num(){
-      return this->money_num;
-   }
-
-   void set_money_num(const int number){
-      this->money_num = number;
+   bool set_position(const int x, const int y, const BoardState state){
+      if (x >= size || y >= size){
+         cout << "X ou Y estão além dos limites do tabuleiro";
+         return false;
+      }
+      cells[x][y] = state;
+      return true;
    }
 
    void draw_victory(){
