@@ -97,7 +97,7 @@ class Game{ //classe que lida com a lógica do jogo e as threads
       generator(static_cast<unsigned int>(chrono::system_clock::now().time_since_epoch().count())),                             
       map_elements_distrib(0, board_size - 1)
    {
-      this->money_num = max(board_size - (num_of_cops*4),1); //quanto maior o mapa, mais dinheiro, quanto mais policiais, menos dinheiro
+      this->money_num = max(board_size - (num_of_cops*6),1); //quanto maior o mapa, mais dinheiro, quanto mais policiais, menos dinheiro
       //no minimo vamos ter 1 dinheiro
       this->generate_game_elements();
    }
@@ -160,6 +160,7 @@ class Game{ //classe que lida com a lógica do jogo e as threads
             this->game_board.set_position(old_i, old_j, BoardState::EMPTY); //posição antiga fica vazia
             this->robber_position = pair(new_i,new_j);
             this->money_num--; //decrementa número de dinheiro
+            cout << "Pegou dinheiro"  << endl;
             break;
          case BoardState::EMPTY: //move para uma nova posição
             this->game_board.set_position(new_i, new_j, BoardState::ROBBER); //atualiza posição do bandido
@@ -213,10 +214,10 @@ class Game{ //classe que lida com a lógica do jogo e as threads
 int main(){
    Game my_game = Game(15,2);
    
-   for (int i = 0 ; i < 10 ; i++){
+   for (int i = 0 ; i < 10000 ; i++){
          my_game.play_game();
          my_game.move_robber();
-         this_thread::sleep_for(chrono::seconds(2));         
+         this_thread::sleep_for(chrono::seconds(1));         
    }
 
 };
