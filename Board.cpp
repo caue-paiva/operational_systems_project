@@ -4,12 +4,13 @@
 #include <random>
 #include <mutex>
 #include <chrono> 
+#include <cstdlib>
 #include "ThreeStateMutex.cpp"
 
 
 using namespace std;
 
-enum BoardState {
+enum BoardState { //enum para os estados/elementos possíveis do tabuleiro/mapa
    EMPTY = ' ',
    WALL = 'o',
    ROBBER = '@',
@@ -18,7 +19,7 @@ enum BoardState {
 };
 
 
-class Board {
+class Board { //classe que lida com as posições do tabuleiro, os mutexes dela e em printar as coisas
 
    private:
       vector<vector<BoardState>> cells; //vetor de células do mapa
@@ -27,7 +28,7 @@ class Board {
       uniform_int_distribution<> map_type_distrib; //gerar o tipo do mapa
 
 
-   void generate_walls(){
+   void generate_walls(){ //gera o mapa do jogo, escolhendo entre 3 possibilidades
       //vamos ter  3 "mapas" diferentes e ele será escolhido de forma aletória. Não existe geração automática, os mapas são 
       //hardcoded
       int map_choice = map_type_distrib(generator);
@@ -102,6 +103,12 @@ class Board {
     }
 
    void draw_board(){
+            //cout << "\033[2J\033[3J\033[H"; //limpa a tela e move cursor para cima.
+            for (int i = 0; i < size + 5; i++)
+            {
+               cout << endl;
+            }
+            
             string board_string;
             for (int i = 0; i < size; i++){
                   for (int j = 0; j < size; j++){
@@ -141,18 +148,25 @@ class Board {
             cout << board_string;
       }
 
-   bool position_is_free(const int x, const int y){
-            if (cells[x][y] == BoardState::EMPTY)
-               return true;
-            return false;
-      }
-   
-   bool set_position(const int x, const int y, const BoardState state){
-      if (x >= size || y >= size){
-         cout << "X ou Y estão além dos limites do tabuleiro";
+   bool position_is_valid(const int i, const int j){
+      if (i >= size || j >= size){
          return false;
       }
-      cells[x][y] = state;
+      return true;
+   }
+
+   bool position_is_free(const int i, const int j){ //diz se uma posição do tabuleiro é vazia
+         if (!this->position_is_valid(i,j)) //posição não valida
+            return false;
+         if (cells[i][j] == BoardState::EMPTY)
+            return true;
+         return false;
+      }
+   
+   bool set_position(const int i, const int j, const BoardState state){ //seta uma posição do tabuleiro a um estado especifico
+      if (!this->position_is_valid(i,j))
+         return false;
+      cells[i][j] = state;
       return true;
    }
 

@@ -6,10 +6,22 @@
 #include <chrono> 
 #include "Board.cpp"
 #include <utility>
+#include <cstdlib>
+#include <thread> 
+#include <cctype> 
 
-class Game{
+
+using namespace std;
+
+class Game{ //classe que lida com a lógica do jogo e as threads
 
    private:
+
+   //delays em segundos para as ações de cada thread
+   const int refresh_board_delay = 1;
+   const int user_input_delay = 1;
+   const int cop_movement_delay = 2;
+
 
    //atributos para o estado inicial do tabuleiro
    Board game_board;
@@ -41,35 +53,35 @@ class Game{
       //gera policiais
       int cops_generated = 0;
       while (cops_generated < num_of_cops){ //gerar policiais até atingir o número
-         int new_x = this->get_random_position(); //posições aleatórias
-         int new_y = this->get_random_position();
+         int new_i = this->get_random_position(); //posições aleatórias
+         int new_j = this->get_random_position();
 
-         if (this->game_board.position_is_free(new_x,new_y)){ //posição está livre
-            this->game_board.set_position(new_x,new_y,BoardState::COP);//coloca o policial
-            this->cop_positions.emplace_back(pair(new_x,new_y));
+         if (this->game_board.position_is_free(new_i,new_j)){ //posição está livre
+            this->game_board.set_position(new_i,new_j,BoardState::COP);//coloca o policial
+            this->cop_positions.emplace_back(pair(new_i,new_j));
             cops_generated += 1;
          }
       }
 
       //gera o bandido
-      int robber_x = this->get_random_position(); //posição do ladrão
-      int robber_y = this->get_random_position();
-      while (!this->game_board.position_is_free(robber_x,robber_y)){ //enquanto a posição gerada não for de um lugar vazio
-            robber_x = this->get_random_position();
-            robber_y = this->get_random_position();
+      int robber_i = this->get_random_position(); //posição do ladrão
+      int robber_j = this->get_random_position();
+      while (!this->game_board.position_is_free(robber_i,robber_j)){ //enquanto a posição gerada não for de um lugar vazio
+            robber_i = this->get_random_position();
+            robber_j = this->get_random_position();
       }
-      this->game_board.set_position(robber_x,robber_y,BoardState::ROBBER); //coloca bandido
-      this->robber_position = pair(robber_x,robber_y);
+      this->game_board.set_position(robber_i,robber_j,BoardState::ROBBER); //coloca bandido
+      this->robber_position = pair(robber_i,robber_j);
 
       //gera dinheiro
       int money_generated = 0;
       cout << money_num << endl;
       while (money_generated < money_num){ //gerar policiais até atingir o número
-         int new_x = this->get_random_position(); //posições aleatórias
-         int new_y = this->get_random_position();
+         int new_i = this->get_random_position(); //posições aleatórias
+         int new_j = this->get_random_position();
 
-         if (this->game_board.position_is_free(new_x,new_y)){ //posição está livre
-            this->game_board.set_position(new_x,new_y,BoardState::MONEY);// coloca o dinheiro
+         if (this->game_board.position_is_free(new_i,new_j)){ //posição está livre
+            this->game_board.set_position(new_i,new_j,BoardState::MONEY);// coloca o dinheiro
             money_generated += 1;
          }
       }
@@ -89,9 +101,59 @@ class Game{
       this->generate_game_elements();
    }
 
-
    void play_game(){
       this->game_board.draw_board();
+   }
+
+   void move_robber(){
+      cout << "Mova o Personagem: Digite A W S D: " << endl;
+      char input;
+      cin >> input;
+      char uppercase = toupper(input);
+
+      int robber_i = this->robber_position.first;
+      int robber_j = this->robber_position.second;
+
+      int new_i = robber_i; //começa com posição atual
+      int new_j = robber_j;
+
+      switch (uppercase) //calcula nova posi
+      {
+         case 'A': // move para esq
+            new_j = robber_j - 1;
+            break;
+         case 'W': // move para cima
+            new_i = robber_i - 1;
+            break;
+         case 'S': // move para baixo
+            new_i = robber_i + 1;
+            break;
+         case 'D': // move para dir
+            new_j = robber_j + 1;
+            break;
+         default:
+            cout << "Input inválido" << endl;
+            break;
+      }
+
+      cout << new_i << " " << new_j <<endl;
+      //com a nova posição, vamos validar o movimento e mover se possível
+      if (this->game_board.position_is_free(new_i, new_j)) {
+         this->game_board.set_position(new_i, new_j, BoardState::ROBBER);
+         this->game_board.set_position(robber_i, robber_j, BoardState::EMPTY);
+         this->robber_position = pair(new_i,new_j);
+      } else {
+         cout << "Posição Não valida" << endl;
+      }
+
+   }
+
+
+   void render_game_board(){ //função para thread renderizar o jogo
+      while (true) { //loop infinito
+         this->game_board.draw_board(); //desenha tabuleiro
+         this_thread::sleep_for(chrono::seconds(this->refresh_board_delay));
+      }
    }
 
    void print_cops(){
@@ -109,7 +171,14 @@ class Game{
 
 int main(){
    Game my_game = Game(15,2);
-   my_game.play_game();
-   my_game.print_cops();
-   my_game.print_robber();
+   
+   for (int i = 0 ; i < 10 ; i++){
+         my_game.play_game();
+         this_thread::sleep_for(chrono::seconds(1));
+         my_game.print_robber();
+         my_game.move_robber();
+         this_thread::sleep_for(chrono::seconds(1));
+         
+   }
+
 };
