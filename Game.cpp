@@ -106,13 +106,15 @@ class Game{ //classe que lida com a lógica do jogo e as threads
       this->game_board.draw_board();
    }
 
-   void move_robber(){
+   void move_robber(){ //função que pega input do usuário e que move o bandido
+
+     //pegar input do usuário
       cout << "Mova o Personagem: Digite A W S D: " << endl;
       char input;
       cin >> input;
       char uppercase = toupper(input);
 
-      int robber_i = this->robber_position.first;
+      int robber_i = this->robber_position.first; //posição atual do bandido
       int robber_j = this->robber_position.second;
 
       int new_i = robber_i; //começa com posição atual
@@ -139,35 +141,37 @@ class Game{ //classe que lida com a lógica do jogo e as threads
 
       //posição deve ser válida e não deve ser parede
       if (this->game_board.position_is_valid(new_i, new_j) &&  !this->game_board.position_has(new_i,new_j,BoardState::WALL)) {
-         this->game_board.set_position(new_i, new_j, BoardState::ROBBER);
-         this->game_board.set_position(robber_i, robber_j, BoardState::EMPTY);
-         this->robber_position = pair(new_i,new_j);
+         this->robber_logic(new_i,new_j,robber_i,robber_j); //lógica de movimento do bandido
       } else {
          cout << "Posição Não valida" << endl;
       }
-
    }
 
    void robber_logic(const int new_i, const int new_j, const int old_i, const int old_j){ //lógica para mover bandido caso a nova posição não seja invalida ou parede
-      BoardState element = this->game_board.get_position(new_i, new_j);
+      BoardState element = this->game_board.get_position(new_i, new_j); //elemento presente na nova posição
 
       switch (element)
       {
-      case BoardState::COP:
-         this->game_over(); //perdeu mané
-         break;
-      case BoardState::MONEY:
-         this->game_board.set_position(new_i, new_j, BoardState::ROBBER);
-         this->game_board.set_position(old_i, old_j, BoardState::EMPTY); //posição antiga fica vazia
-         this->robber_position = pair(new_i,new_j);
-         break;
-      case BoardState::EMPTY: //move para uma nova posição
-         this->game_board.set_position(new_i, new_j, BoardState::ROBBER); //atualiza posição do bandido
-         this->game_board.set_position(old_i, old_j, BoardState::EMPTY);  //posição antiga fica vazia
-         this->robber_position = pair(new_i,new_j);
-         break;
-      default:
-         break;
+         case BoardState::COP:
+            this->game_over(); //perdeu mané
+            break;
+         case BoardState::MONEY:
+            this->game_board.set_position(new_i, new_j, BoardState::ROBBER);
+            this->game_board.set_position(old_i, old_j, BoardState::EMPTY); //posição antiga fica vazia
+            this->robber_position = pair(new_i,new_j);
+            this->money_num--; //decrementa número de dinheiro
+            break;
+         case BoardState::EMPTY: //move para uma nova posição
+            this->game_board.set_position(new_i, new_j, BoardState::ROBBER); //atualiza posição do bandido
+            this->game_board.set_position(old_i, old_j, BoardState::EMPTY);  //posição antiga fica vazia
+            this->robber_position = pair(new_i,new_j);
+            break;
+         default:
+            break;
+      }
+
+      if (this->money_num == 0){
+         this->game_win(); //bandido roubou todo dinheiro, jogador ganhou
       }
 
    }
@@ -189,11 +193,18 @@ class Game{ //classe que lida com a lógica do jogo e as threads
       cout << "(" << this->robber_position.first << ", " << this->robber_position.second << ")"  << endl;
    }
 
-   void game_over(){
+   void game_over(){ //jogador perdeu
       //matar as threads aqui
       this->game_board.draw_game_over();
       cout << "Jogo Acabou, você perdeu!" << endl;
-      exit(1);
+      exit(0);
+   }
+
+   void game_win(){ //jogador ganhou
+      //mata as threads aqui
+      this->game_board.draw_victory();
+      cout << "Jogo Acabou, você Ganhou!!!!" << endl;
+      exit(0);
    }
 
 };
