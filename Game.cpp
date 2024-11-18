@@ -43,8 +43,6 @@ class Game{ //classe que lida com a lógica do jogo e as threads
    }
 
    void generate_game_elements(){
-      cout << board_size << endl;
-      cout << num_of_cops << endl;
       if (num_of_cops >= (board_size * board_size) - 1){
          cout << "Error: Too many cops for the board size." << endl;
          return;
@@ -75,7 +73,6 @@ class Game{ //classe que lida com a lógica do jogo e as threads
 
       //gera dinheiro
       int money_generated = 0;
-      cout << money_num << endl;
       while (money_generated < money_num){ //gerar policiais até atingir o número
          int new_i = this->get_random_position(); //posições aleatórias
          int new_j = this->get_random_position();
@@ -136,7 +133,6 @@ class Game{ //classe que lida com a lógica do jogo e as threads
             break;
       }
 
-      cout << new_i << " " << new_j <<endl;
       //com a nova posição, vamos validar o movimento e mover se possível
       if (this->game_board.position_is_free(new_i, new_j)) {
          this->game_board.set_position(new_i, new_j, BoardState::ROBBER);
@@ -174,11 +170,8 @@ int main(){
    
    for (int i = 0 ; i < 10 ; i++){
          my_game.play_game();
-         this_thread::sleep_for(chrono::seconds(1));
-         my_game.print_robber();
          my_game.move_robber();
-         this_thread::sleep_for(chrono::seconds(1));
-         
+         this_thread::sleep_for(chrono::seconds(2));         
    }
 
 };

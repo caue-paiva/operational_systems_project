@@ -103,11 +103,11 @@ class Board { //classe que lida com as posições do tabuleiro, os mutexes dela 
     }
 
    void draw_board(){
-            //cout << "\033[2J\033[3J\033[H"; //limpa a tela e move cursor para cima.
-            for (int i = 0; i < size + 5; i++)
+            cout << "\033[2J\033[3J\033[H"; //limpa a tela e move cursor para cima.
+            /*for (int i = 0; i < size + 5; i++)
             {
                cout << endl;
-            }
+            }*/
             
             string board_string;
             for (int i = 0; i < size; i++){
