@@ -4,6 +4,7 @@
 #include <random>
 #include <mutex>
 #include <chrono> 
+#include "ThreeStateMutex.cpp"
 
 
 using namespace std;
@@ -21,7 +22,7 @@ class Board {
 
    private:
       vector<vector<BoardState>> cells; //vetor de células do mapa
-      vector<vector<mutex>> mutexes; //mutex para cada célula do mapa
+      vector<vector<ThreeStateMutex>> mutexes; //mutex para cada célula do mapa
       
       int size;
       int num_of_cops;
