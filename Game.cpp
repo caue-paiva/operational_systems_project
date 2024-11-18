@@ -17,6 +17,10 @@ class Game{ //classe que lida com a lógica do jogo e as threads
 
    private:
 
+   enum RobberAction {
+
+   };
+
    //delays em segundos para as ações de cada thread
    const int refresh_board_delay = 1;
    const int user_input_delay = 1;
@@ -133,8 +137,8 @@ class Game{ //classe que lida com a lógica do jogo e as threads
             break;
       }
 
-      //com a nova posição, vamos validar o movimento e mover se possível
-      if (this->game_board.position_is_free(new_i, new_j)) {
+      //posição deve ser válida e não deve ser parede
+      if (this->game_board.position_is_valid(new_i, new_j) &&  !this->game_board.position_has(new_i,new_j,BoardState::WALL)) {
          this->game_board.set_position(new_i, new_j, BoardState::ROBBER);
          this->game_board.set_position(robber_i, robber_j, BoardState::EMPTY);
          this->robber_position = pair(new_i,new_j);
@@ -144,6 +148,29 @@ class Game{ //classe que lida com a lógica do jogo e as threads
 
    }
 
+   void robber_logic(const int new_i, const int new_j, const int old_i, const int old_j){ //lógica para mover bandido caso a nova posição não seja invalida ou parede
+      BoardState element = this->game_board.get_position(new_i, new_j);
+
+      switch (element)
+      {
+      case BoardState::COP:
+         this->game_over(); //perdeu mané
+         break;
+      case BoardState::MONEY:
+         this->game_board.set_position(new_i, new_j, BoardState::ROBBER);
+         this->game_board.set_position(old_i, old_j, BoardState::EMPTY); //posição antiga fica vazia
+         this->robber_position = pair(new_i,new_j);
+         break;
+      case BoardState::EMPTY: //move para uma nova posição
+         this->game_board.set_position(new_i, new_j, BoardState::ROBBER); //atualiza posição do bandido
+         this->game_board.set_position(old_i, old_j, BoardState::EMPTY);  //posição antiga fica vazia
+         this->robber_position = pair(new_i,new_j);
+         break;
+      default:
+         break;
+      }
+
+   }
 
    void render_game_board(){ //função para thread renderizar o jogo
       while (true) { //loop infinito
@@ -160,6 +187,13 @@ class Game{ //classe que lida com a lógica do jogo e as threads
 
    void print_robber(){
       cout << "(" << this->robber_position.first << ", " << this->robber_position.second << ")"  << endl;
+   }
+
+   void game_over(){
+      //matar as threads aqui
+      this->game_board.draw_game_over();
+      cout << "Jogo Acabou, você perdeu!" << endl;
+      exit(1);
    }
 
 };

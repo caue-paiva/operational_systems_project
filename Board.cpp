@@ -161,7 +161,23 @@ class Board { //classe que lida com as posições do tabuleiro, os mutexes dela 
          if (cells[i][j] == BoardState::EMPTY)
             return true;
          return false;
-      }
+   }
+
+   bool position_has(const int i, const int j, BoardState element) { //verifica se o elemento está presente na posição i,j
+         if (!this->position_is_valid(i,j)) //posição não valida
+            return false;
+         if (cells[i][j] == element) //checa se existe aquele elemento naquela posição
+            return true;
+         return false;
+   }
+
+   BoardState get_position(const int i, const int j){
+         if (!this->position_is_valid(i,j)){ //posição não valida
+            cout << "função get_position acessou posição de memória invalida" << endl;
+            exit(1);
+         }
+         return this->cells[i][j];
+   }
    
    bool set_position(const int i, const int j, const BoardState state){ //seta uma posição do tabuleiro a um estado especifico
       if (!this->position_is_valid(i,j))
