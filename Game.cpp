@@ -10,6 +10,23 @@
 #include <thread> 
 #include <cctype> 
 
+/*
+Classe que implementa toda a lógica do jogo, tem um atributo que é um objeto da classe Board, que representa o tabuleiro do jogo.
+
+tem atributos também para guardar a posição do bandido, dos policiais e o dinheiro que tem no tabuleiro.
+
+Ela tem métodos para gerar os elementos (Bandido, policial e dinheiro) do jogo e colocar eles no tabuleiro, para renderizar a tela de forma infinita 
+(até ter game-over ou vitória).
+
+Além disso, o input do jogador e a lógica de movimento do bandido estão implementadas nessa classe (métodos move_robber e robber_logic).
+
+
+O que falta fazer:
+
+Basicamente juntar tudo e colocar thread (Uma pro input do user, uma pra renderizar a tela e uma para cada policial) e refinar a lógica de movimento do bandido com base nos mutexes
+e as threads.
+*/
+
 
 using namespace std;
 

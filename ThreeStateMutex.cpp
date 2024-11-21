@@ -3,6 +3,18 @@
 #include <condition_variable>
 #include <atomic>
 
+/*
+Mutex com 3 estados
+
+1) Livre
+
+2) Acessado pelo policial
+
+3) Acessado pelo bandido
+
+Cada bloco do tabuleiro tem um mutex dessa associado, para evitar race conditions e controlar a lógica de movimento e do jogo
+*/
+
 enum AccessState {
     NOT_ACCESSED,
     ACCESSED_BY_COPS,

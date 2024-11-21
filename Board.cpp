@@ -7,6 +7,19 @@
 #include <cstdlib>
 #include "ThreeStateMutex.cpp"
 
+/*
+Classe que modela o tabuleiro, não implementa lógica do jogo (condição de vitória, game-over, movimento...) apenas guarda os elementos do tabuleiro 
+como uma matriz de variaveis do enum BoardState e também guarda uma matriz de mutexes de 3 estados (ThreeStateMutex) para cada entrada na matriz de posição
+
+OBS: Posição dos elementos é indexada por I (Linha) e J (Coluna) igual numa matriz normal.
+
+Tem funções para mudar o estado do tabuleiro (set_position) e outras para apenas ler o estado (verificar se a posição é valida, oq tem nela...)
+
+Também implementa uma função que escolhe randomicamente entre 3 mapas e gera o tabuleiro de acordo com o mapa escolhido (Cruz ou X).
+
+Finalmente temos funções para printar o mapa na tela (e limpar o terminal,dando a impressão de que ocorre sempre um refresh) e para desenhar a tela de game over e de vitória
+*/
+
 
 using namespace std;
 
@@ -186,7 +199,7 @@ class Board { //classe que lida com as posições do tabuleiro, os mutexes dela 
       return true;
    }
 
-   void draw_victory(){
+   void draw_victory(){ //printa tela de vitória
     std::string green = "\033[32m"; //  cor verde
     std::string reset = "\033[0m";   // Reset color
 
@@ -200,7 +213,7 @@ class Board { //classe que lida com as posições do tabuleiro, os mutexes dela 
     )" << reset << std::endl;
    }
 
-   void draw_game_over(){
+   void draw_game_over(){ //printa tela de game over
       string red = "\033[31m"; // cor vermelha
       string reset = "\033[0m";   //reseta a cor
 
