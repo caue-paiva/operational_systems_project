@@ -3,12 +3,19 @@
 #include <vector>
 #include <random>
 #include <mutex>
+#include <condition_variable>
 #include <chrono> 
 #include "Board.cpp"
 #include <utility>
 #include <cstdlib>
 #include <thread> 
+#include <atomic>
 #include <cctype> 
+#include <unistd.h>
+
+#include <termios.h>
+
+using namespace std;
 
 /*
 Classe que implementa toda a lógica do jogo, tem um atributo que é um objeto da classe Board, que representa o tabuleiro do jogo.
@@ -27,214 +34,320 @@ Basicamente juntar tudo e colocar thread (Uma pro input do user, uma pra renderi
 e as threads.
 */
 
+class Game {
+private:
+    // Mutex for thread-safe access to shared game state
+    mutex game_mutex;
+    condition_variable game_cv;
 
-using namespace std;
+    // Atomic flag to control game state
+    atomic<bool> game_running{true};
 
-class Game{ //classe que lida com a lógica do jogo e as threads
+    // Game configuration
+    enum class RobberAction {
+        MOVE_LEFT,
+        MOVE_RIGHT,
+        MOVE_UP,
+        MOVE_DOWN,
+        INVALID
+    };
 
-   private:
+    // Delays in seconds for thread actions
+    const int REFRESH_BOARD_DELAY = 1;
+    const int USER_INPUT_DELAY = 1;
+    const int COP_MOVEMENT_DELAY = 2;
 
-   enum RobberAction {
+    // Game board and elements
+    Board game_board;
+    int board_size;
+    int num_of_cops;
+    atomic<int> money_num;
 
-   };
+    // Random number generation
+    mt19937 generator;  
+    uniform_int_distribution<> map_elements_distrib;       
 
-   //delays em segundos para as ações de cada thread
-   const int refresh_board_delay = 1;
-   const int user_input_delay = 1;
-   const int cop_movement_delay = 2;
+    // Game element positions
+    vector<pair<int, int>> cop_positions;
+    pair<int,int> robber_position;
 
+    // Threads
+    vector<thread> cop_threads;
+    thread render_thread;
+    thread input_thread;
 
-   //atributos para o estado inicial do tabuleiro
-   Board game_board;
-   int board_size;
-   int num_of_cops;
-   int money_num;
-
-   //atributos para gerar números aleatórios
-   mt19937 generator;  
-   uniform_int_distribution<> map_elements_distrib;       
-
-   //atributos para guardar o estado dos elementos dinâmicos do jogo
-   vector<pair<int, int>> cop_positions;
-   pair<int,int> robber_position;
-
-
-   int get_random_position() {
+    // Helper methods for random positioning
+    int get_random_position() {
         return map_elements_distrib(generator);
-   }
+    }
 
-   void generate_game_elements(){
-      if (num_of_cops >= (board_size * board_size) - 1){
-         cout << "Error: Too many cops for the board size." << endl;
-         return;
-      }
+    void generate_game_elements() {
+        lock_guard<mutex> lock(game_mutex);
 
-      //gera policiais
-      int cops_generated = 0;
-      while (cops_generated < num_of_cops){ //gerar policiais até atingir o número
-         int new_i = this->get_random_position(); //posições aleatórias
-         int new_j = this->get_random_position();
+        if (num_of_cops >= (board_size * board_size) - 1) {
+            cout << "Error: Too many cops for the board size." << endl;
+            return;
+        }
 
-         if (this->game_board.position_is_free(new_i,new_j)){ //posição está livre
-            this->game_board.set_position(new_i,new_j,BoardState::COP);//coloca o policial
-            this->cop_positions.emplace_back(pair(new_i,new_j));
-            cops_generated += 1;
-         }
-      }
+        // Generate cops
+        int cops_generated = 0;
+        while (cops_generated < num_of_cops) {
+            int new_i = get_random_position();
+            int new_j = get_random_position();
 
-      //gera o bandido
-      int robber_i = this->get_random_position(); //posição do ladrão
-      int robber_j = this->get_random_position();
-      while (!this->game_board.position_is_free(robber_i,robber_j)){ //enquanto a posição gerada não for de um lugar vazio
-            robber_i = this->get_random_position();
-            robber_j = this->get_random_position();
-      }
-      this->game_board.set_position(robber_i,robber_j,BoardState::ROBBER); //coloca bandido
-      this->robber_position = pair(robber_i,robber_j);
+            if (game_board.position_is_free(new_i, new_j)) {
+                game_board.set_position(new_i, new_j, BoardState::COP);
+                cop_positions.emplace_back(new_i, new_j);
+                cops_generated++;
+            }
+        }
 
-      //gera dinheiro
-      int money_generated = 0;
-      while (money_generated < money_num){ //gerar policiais até atingir o número
-         int new_i = this->get_random_position(); //posições aleatórias
-         int new_j = this->get_random_position();
+        // Generate robber
+        int robber_i = get_random_position();
+        int robber_j = get_random_position();
+        while (!game_board.position_is_free(robber_i, robber_j)) {
+            robber_i = get_random_position();
+            robber_j = get_random_position();
+        }
+        game_board.set_position(robber_i, robber_j, BoardState::ROBBER);
+        robber_position = make_pair(robber_i, robber_j);
 
-         if (this->game_board.position_is_free(new_i,new_j)){ //posição está livre
-            this->game_board.set_position(new_i,new_j,BoardState::MONEY);// coloca o dinheiro
-            money_generated += 1;
-         }
-      }
-   }
+        // Generate money
+        int money_generated = 0;
+        while (money_generated < money_num) {
+            int new_i = get_random_position();
+            int new_j = get_random_position();
 
-   public:
+            if (game_board.position_is_free(new_i, new_j)) {
+                game_board.set_position(new_i, new_j, BoardState::MONEY);
+                money_generated++;
+            }
+        }
+    }
 
-   Game(const int board_size,const int num_of_cops): 
-      board_size(board_size),
-      game_board(Board(board_size)),
-      num_of_cops(num_of_cops),
-      generator(static_cast<unsigned int>(chrono::system_clock::now().time_since_epoch().count())),                             
-      map_elements_distrib(0, board_size - 1)
-   {
-      this->money_num = max(board_size - (num_of_cops*6),1); //quanto maior o mapa, mais dinheiro, quanto mais policiais, menos dinheiro
-      //no minimo vamos ter 1 dinheiro
-      this->generate_game_elements();
-   }
+    void move_cop(int cop_index) {
+    while (game_running) {
+        {
+            unique_lock<mutex> lock(game_mutex);
+            game_cv.wait_for(lock, chrono::seconds(COP_MOVEMENT_DELAY), [this] { return !game_running; });
 
-   void play_game(){
-      this->game_board.draw_board();
-   }
+            if (!game_running) break;
 
-   void move_robber(){ //função que pega input do usuário e que move o bandido
+            // Cop movement logic
+            pair<int, int>& cop_pos = cop_positions[cop_index];
+            vector<pair<int, int>> possible_moves = {
+                {cop_pos.first-1, cop_pos.second},
+                {cop_pos.first+1, cop_pos.second},
+                {cop_pos.first, cop_pos.second-1},
+                {cop_pos.first, cop_pos.second+1}
+            };
 
-     //pegar input do usuário
-      cout << "Mova o Personagem: Digite A W S D: " << endl;
-      char input;
-      cin >> input;
-      char uppercase = toupper(input);
+            // Manually filter valid moves
+            vector<pair<int, int>> valid_moves;
+            for (const auto& move : possible_moves) {
+                if (game_board.position_is_valid(move.first, move.second) && 
+                    !game_board.position_has(move.first, move.second, BoardState::WALL) &&
+                    !game_board.position_has(move.first, move.second, BoardState::COP)) {
+                    valid_moves.push_back(move);
+                }
+            }
 
-      int robber_i = this->robber_position.first; //posição atual do bandido
-      int robber_j = this->robber_position.second;
+            // If valid moves exist, choose randomly
+            if (!valid_moves.empty()) {
+                int move_index = get_random_position() % valid_moves.size();
+                pair<int, int> new_pos = valid_moves[move_index];
 
-      int new_i = robber_i; //começa com posição atual
-      int new_j = robber_j;
+                // Update board
+                game_board.set_position(cop_pos.first, cop_pos.second, BoardState::EMPTY);
+                game_board.set_position(new_pos.first, new_pos.second, BoardState::COP);
+                cop_pos = new_pos;
 
-      switch (uppercase) //calcula nova posi
-      {
-         case 'A': // move para esq
-            new_j = robber_j - 1;
-            break;
-         case 'W': // move para cima
-            new_i = robber_i - 1;
-            break;
-         case 'S': // move para baixo
-            new_i = robber_i + 1;
-            break;
-         case 'D': // move para dir
-            new_j = robber_j + 1;
-            break;
-         default:
-            cout << "Input inválido" << endl;
-            break;
-      }
+                // Verifica se o ladrão foi pego
+                if (new_pos == robber_position) {
+                    game_over();
+                }
+            }
+        }
+        this_thread::sleep_for(chrono::seconds(COP_MOVEMENT_DELAY));
+    }
+}
 
-      //posição deve ser válida e não deve ser parede
-      if (this->game_board.position_is_valid(new_i, new_j) &&  !this->game_board.position_has(new_i,new_j,BoardState::WALL)) {
-         this->robber_logic(new_i,new_j,robber_i,robber_j); //lógica de movimento do bandido
-      } else {
-         cout << "Posição Não valida" << endl;
-      }
-   }
+void set_input_mode() {
+    struct termios new_termios;
 
-   void robber_logic(const int new_i, const int new_j, const int old_i, const int old_j){ //lógica para mover bandido caso a nova posição não seja invalida ou parede
-      BoardState element = this->game_board.get_position(new_i, new_j); //elemento presente na nova posição
+    // Obtém as configurações atuais da terminal
+    tcgetattr(STDIN_FILENO, &new_termios);
 
-      switch (element)
-      {
-         case BoardState::COP:
-            this->game_over(); //perdeu mané
-            break;
-         case BoardState::MONEY:
-            this->game_board.set_position(new_i, new_j, BoardState::ROBBER);
-            this->game_board.set_position(old_i, old_j, BoardState::EMPTY); //posição antiga fica vazia
-            this->robber_position = pair(new_i,new_j);
-            this->money_num--; //decrementa número de dinheiro
-            cout << "Pegou dinheiro"  << endl;
-            break;
-         case BoardState::EMPTY: //move para uma nova posição
-            this->game_board.set_position(new_i, new_j, BoardState::ROBBER); //atualiza posição do bandido
-            this->game_board.set_position(old_i, old_j, BoardState::EMPTY);  //posição antiga fica vazia
-            this->robber_position = pair(new_i,new_j);
-            break;
-         default:
-            break;
-      }
+    // Desativa o modo de buffering e a necessidade de pressionar Enter
+    new_termios.c_lflag &= ~(ICANON | ECHO); 
+    new_termios.c_cc[VMIN] = 1;  // Leitura de 1 caractere
+    new_termios.c_cc[VTIME] = 0; // Sem tempo limite
 
-      if (this->money_num == 0){
-         this->game_win(); //bandido roubou todo dinheiro, jogador ganhou
-      }
+    // Aplica as configurações
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
+}
 
-   }
+void restore_input_mode() {
+    struct termios new_termios;
 
-   void render_game_board(){ //função para thread renderizar o jogo
-      while (true) { //loop infinito
-         this->game_board.draw_board(); //desenha tabuleiro
-         this_thread::sleep_for(chrono::seconds(this->refresh_board_delay));
-      }
-   }
+    // Restaura as configurações originais da terminal
+    tcgetattr(STDIN_FILENO, &new_termios);
+    new_termios.c_lflag |= (ICANON | ECHO);  // Restaura o buffering
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
+}
 
-   void print_cops(){
-      for (pair element : this->cop_positions){
-         cout << "(" << element.first << ", " << element.second << ")" << endl;
-      }
-   }
+char get_char_no_enter() {
+    char ch;
+    set_input_mode();
+    ch = getchar();  // Lê um único caractere
+    restore_input_mode();
+    return ch;
+}
 
-   void print_robber(){
-      cout << "(" << this->robber_position.first << ", " << this->robber_position.second << ")"  << endl;
-   }
+void handle_user_input() {
+    while (game_running) {
+        {
+            unique_lock<mutex> lock(game_mutex);
+            game_cv.wait_for(lock, chrono::seconds(USER_INPUT_DELAY), [this] { return !game_running; });
 
-   void game_over(){ //jogador perdeu
-      //matar as threads aqui
-      this->game_board.draw_game_over();
-      cout << "Jogo Acabou, você perdeu!" << endl;
-      exit(0);
-   }
+            if (!game_running) break;
+        }
 
-   void game_win(){ //jogador ganhou
-      //mata as threads aqui
-      this->game_board.draw_victory();
-      cout << "Jogo Acabou, você Ganhou!!!!" << endl;
-      exit(0);
-   }
+        // Pega o input do usuário
+        char input = get_char_no_enter(); // Pega um único caractere
+        char uppercase = toupper(input);
 
+        {
+            lock_guard<mutex> lock(game_mutex);
+
+            // Move o ladrão com base no input do usuário
+            int robber_i = robber_position.first;
+            int robber_j = robber_position.second;
+            int new_i = robber_i;
+            int new_j = robber_j;
+
+            switch (uppercase) {
+                case 'A': new_j = robber_j - 1; break;
+                case 'W': new_i = robber_i - 1; break;
+                case 'S': new_i = robber_i + 1; break;
+                case 'D': new_j = robber_j + 1; break;
+                default:
+                    cout << "Invalid Input" << endl;
+                    continue;
+            }
+
+            // Valida o movimento
+            if (game_board.position_is_valid(new_i, new_j) && !game_board.position_has(new_i, new_j, BoardState::WALL)) {
+                robber_logic(new_i, new_j, robber_i, robber_j);
+            } else {
+                cout << "Invalid Position" << endl;
+            }
+        }
+
+        this_thread::sleep_for(chrono::seconds(USER_INPUT_DELAY));
+    }
+}
+
+
+
+    void render_game_board() {
+        while (game_running) {
+            {
+                lock_guard<mutex> lock(game_mutex);
+                game_board.draw_board();
+            }
+            this_thread::sleep_for(chrono::seconds(REFRESH_BOARD_DELAY));
+        }
+    }
+
+    void robber_logic(const int new_i, const int new_j, const int old_i, const int old_j) {
+        BoardState element = game_board.get_position(new_i, new_j);
+
+        switch (element) {
+            case BoardState::COP:
+                game_over();
+                break;
+            case BoardState::MONEY:
+                game_board.set_position(new_i, new_j, BoardState::ROBBER);
+                game_board.set_position(old_i, old_j, BoardState::EMPTY);
+                robber_position = make_pair(new_i, new_j);
+                money_num--;
+                cout << "Got money" << endl;
+                break;
+            case BoardState::EMPTY:
+                game_board.set_position(new_i, new_j, BoardState::ROBBER);
+                game_board.set_position(old_i, old_j, BoardState::EMPTY);
+                robber_position = make_pair(new_i, new_j);
+                break;
+            default:
+                break;
+        }
+
+        if (money_num == 0) {
+            game_win();
+        }
+    }
+
+    void game_over() {
+        game_running = false;
+        game_cv.notify_all();
+        game_board.draw_game_over();
+        cout << "Game Over, You Lost!" << endl;
+        exit(0);
+    }
+
+    void game_win() {
+        game_running = false;
+        game_cv.notify_all();
+        game_board.draw_victory();
+        cout << "Game Over, You Won!!!!" << endl;
+        exit(0);
+    }
+
+public:
+    Game(const int board_size, const int num_of_cops) : 
+        board_size(board_size),
+        game_board(Board(board_size)),
+        num_of_cops(num_of_cops),
+        generator(static_cast<unsigned int>(chrono::system_clock::now().time_since_epoch().count())),                             
+        map_elements_distrib(0, board_size - 1)
+    {
+        // Calculate money based on board size and number of cops
+        money_num = max(board_size - (num_of_cops*6), 1);
+        
+        // Generate initial game elements
+        generate_game_elements();
+    }
+
+    void start_game() {
+        // Start rendering thread
+        render_thread = thread(&Game::render_game_board, this);
+
+        // Start input handling thread
+        input_thread = thread(&Game::handle_user_input, this);
+
+        // Start cop movement threads
+        for (int i = 0; i < num_of_cops; ++i) {
+            cop_threads.emplace_back(&Game::move_cop, this, i);
+        }
+
+        // Wait for threads to complete
+        render_thread.join();
+        input_thread.join();
+        for (auto& cop_thread : cop_threads) {
+            cop_thread.join();
+        }
+    }
+
+    ~Game() {
+        // Ensure threads are stopped
+        game_running = false;
+        game_cv.notify_all();
+    }
 };
 
-
-int main(){
-   Game my_game = Game(15,2);
-   
-   for (int i = 0 ; i < 10000 ; i++){
-         my_game.play_game();
-         my_game.move_robber();
-         this_thread::sleep_for(chrono::seconds(1));         
-   }
-
-};
+int main() {
+    Game my_game(15, 2);
+    my_game.start_game();
+    return 0;
+}

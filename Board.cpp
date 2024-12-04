@@ -159,6 +159,7 @@ class Board { //classe que lida com as posições do tabuleiro, os mutexes dela 
                   board_string += "\n";
             }
             cout << board_string;
+            cout << "Move the Character: Enter A W S D: " << endl;
       }
 
    bool position_is_valid(const int i, const int j){
