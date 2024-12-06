@@ -117,10 +117,6 @@ class Board { //classe que lida com as posições do tabuleiro, os mutexes dela 
 
    void draw_board(){
             cout << "\033[2J\033[3J\033[H"; //limpa a tela e move cursor para cima.
-            /*for (int i = 0; i < size + 5; i++)
-            {
-               cout << endl;
-            }*/
             
             string board_string;
             for (int i = 0; i < size; i++){
@@ -129,30 +125,30 @@ class Board { //classe que lida com as posições do tabuleiro, os mutexes dela 
                         BoardState cell = cells[i][j];
                         switch (cell) {
                            case BoardState::WALL:
-                              board_string += "\033[33m"; // Yellow color for WALL
+                              board_string += "\033[33m"; // Cor amarela para parede
                               board_string += (cell);
-                              board_string += "\033[0m"; // Reset color
+                              board_string += "\033[0m"; // Reseta cor
                               break;
 
                            case BoardState::ROBBER:
-                              board_string += "\033[31m"; // Red color for ROBBER
+                              board_string += "\033[31m"; // Cor vermelha para ladrão
                               board_string += (cell);
-                              board_string += "\033[0m"; // Reset color
+                              board_string += "\033[0m"; 
                               break;
 
                            case BoardState::COP:
-                              board_string += "\033[34m"; // Blue color for COP
+                              board_string += "\033[34m"; // Cor azul para o policial
                               board_string += (cell);
-                              board_string += "\033[0m"; // Reset color
+                              board_string += "\033[0m"; 
                               break;
                            case BoardState::MONEY:
-                              board_string += "\033[32m"; // Blue color for COP
+                              board_string += "\033[32m"; // Cor verde para dinheiro
                               board_string += (cell);
-                              board_string += "\033[0m"; // Reset color
+                              board_string += "\033[0m"; 
                               break;
                            case BoardState::EMPTY:
                            default:
-                              board_string += (cell); // No color for EMPTY
+                              board_string += (cell); // Sem cor para espaço vazio de movimentação
                               break;
                         }
                   }

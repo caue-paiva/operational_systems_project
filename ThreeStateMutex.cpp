@@ -30,28 +30,28 @@ private:
 public:
     ThreeStateMutex() : state(NOT_ACCESSED) {}
 
-    // Function to access as cops
+    // Função para acessar como policiais
     void access_by_cops() {
         std::unique_lock<std::mutex> lock(mtx);
         cv.wait(lock, [this]() { return state == NOT_ACCESSED; });
         state = ACCESSED_BY_COPS;
     }
 
-    // Function to access as robber
+    // Função para acessar como ladrão
     void access_by_robber() {
         std::unique_lock<std::mutex> lock(mtx);
         cv.wait(lock, [this]() { return state == NOT_ACCESSED; });
         state = ACCESSED_BY_ROBBER;
     }
 
-    // Function to release access
+    // Função para liberar o acesso
     void release_access() {
         std::unique_lock<std::mutex> lock(mtx);
         state = NOT_ACCESSED;
         cv.notify_all();
     }
 
-    // Get current state (for debugging or logic)
+    // Obter o estado atual (para depuração ou lógica)
     AccessState get_state() {
         std::lock_guard<std::mutex> lock(mtx);
         return state;
