@@ -33,7 +33,7 @@ class Game {
         mutex game_mutex;
         condition_variable game_cv;
 
-        // Bandeira atômica para controlar o estado do jogo
+        // flag atômica para controlar o estado do jogo
         atomic<bool> game_running{true};
 
         // Configuração do jogo

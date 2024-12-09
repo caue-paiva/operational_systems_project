@@ -40,8 +40,8 @@ class Board { //classe que lida com as posições do tabuleiro, os mutexes dela 
       uniform_int_distribution<> map_type_distrib; //gerar o tipo do mapa
 
 
-   void generate_walls(){ //gera o mapa do jogo, escolhendo entre 3 possibilidades
-      //vamos ter  3 "mapas" diferentes e ele será escolhido de forma aletória. Não existe geração automática, os mapas são 
+   void generate_walls(){ //gera o mapa do jogo, escolhendo entre 2 possibilidades
+      //vamos ter  2 "mapas" diferentes e ele será escolhido de forma aletória. Não existe geração automática, os mapas são 
       //hardcoded
       int map_choice = map_type_distrib(generator);
       generate_border_walls();
@@ -58,7 +58,7 @@ class Board { //classe que lida com as posições do tabuleiro, os mutexes dela 
         }
    }
 
-   void generate_border_walls() { //mapa 1
+   void generate_border_walls() { //paredes
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 if (i == 0 || i == size - 1 || j == 0 || j == size - 1) {
@@ -82,7 +82,7 @@ class Board { //classe que lida com as posições do tabuleiro, os mutexes dela 
       }
    }
 
-   void generate_x_pattern() { //gera mapa com um X
+   void generate_x_pattern() { //gera mapa 2 com um X
         int mid_start = size / 2 - 1;  
         int mid_end = size / 2;      
 
