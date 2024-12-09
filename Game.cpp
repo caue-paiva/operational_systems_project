@@ -12,7 +12,6 @@
 #include <atomic>
 #include <cctype> 
 #include <unistd.h>
-
 #include <termios.h>
 
 using namespace std;
@@ -79,7 +78,7 @@ class Game {
             lock_guard<mutex> lock(game_mutex);
 
             if (num_of_cops >= (board_size * board_size) - 1) {
-                cout << "Error: Too many cops for the board size." << endl;
+                cout << "ERRO: Muitos policiais para o tamanho do tabuleiro." << endl;
                 return;
             }
 
@@ -325,7 +324,7 @@ class Game {
                     case 'S': new_i = robber_i + 1; break;
                     case 'D': new_j = robber_j + 1; break;
                     default:
-                        cout << "Invalid Input" << endl;
+                        cout << "Input Inválido" << endl;
                         continue;
                 }
 
@@ -333,7 +332,7 @@ class Game {
                 if (game_board.position_is_valid(new_i, new_j) && !game_board.position_has(new_i, new_j, BoardState::WALL)) {
                     robber_logic(new_i, new_j, robber_i, robber_j);
                 } else {
-                    cout << "Invalid Position" << endl;
+                    cout << "Posição Inválida" << endl;
                 }
             }
         }
@@ -363,7 +362,7 @@ class Game {
                 game_board.set_position(old_i, old_j, BoardState::EMPTY);
                 robber_position = make_pair(new_i, new_j);
                 money_num--;
-                cout << "Got money" << endl;
+                cout << "Pegou Dinheiro" << endl;
                 break;
             case BoardState::EMPTY:
                 game_board.set_position(new_i, new_j, BoardState::ROBBER);
@@ -384,7 +383,7 @@ class Game {
         game_running = false;
         game_cv.notify_all();
         game_board.draw_game_over();
-        cout << "Game Over, You Lost!" << endl;
+        cout << "Game Over, Você Perdeu!" << endl;
         exit(0);
     }
 
@@ -393,7 +392,7 @@ class Game {
         game_running = false;
         game_cv.notify_all();
         game_board.draw_victory();
-        cout << "Game Over, You Won!!!!" << endl;
+        cout << "Você Ganhou!!!!" << endl;
         exit(0);
     }
 

@@ -5,11 +5,10 @@
 #include <mutex>
 #include <chrono> 
 #include <cstdlib>
-#include "ThreeStateMutex.cpp"
 
 /*
 Classe que modela o tabuleiro, não implementa lógica do jogo (condição de vitória, game-over, movimento...) apenas guarda os elementos do tabuleiro 
-como uma matriz de variaveis do enum BoardState e também guarda uma matriz de mutexes de 3 estados (ThreeStateMutex) para cada entrada na matriz de posição
+como uma matriz de variaveis do enum BoardState
 
 OBS: Posição dos elementos é indexada por I (Linha) e J (Coluna) igual numa matriz normal.
 

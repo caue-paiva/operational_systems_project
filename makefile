@@ -1,20 +1,16 @@
-# Variables
+#variaveis
 CXX = g++
 CXXFLAGS = -std=c++17 
 SOURCES = $(wildcard *.cpp)
 EXECUTABLE = program
 
-# Default target: Compile everything
-all: $(EXECUTABLE)
+all: $(EXECUTABLE) #compilar
 
-# Compile the program
 $(EXECUTABLE): $(SOURCES)
 	$(CXX) $(CXXFLAGS) -o $(EXECUTABLE) $(SOURCES)
 
-# Run the program
-run: all
+run: all #executa
 	./$(EXECUTABLE)
 
-# Clean up build files
-clean:
+clean: #limpa
 	rm -f *.out *.o
